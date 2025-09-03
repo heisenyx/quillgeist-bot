@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: quillgeist-bot
+  config:
+    import: optional:file:.env[.properties]
+
+bot:
+  token: ${BOT_TOKEN}
