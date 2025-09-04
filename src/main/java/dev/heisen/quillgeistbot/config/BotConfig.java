@@ -13,6 +13,7 @@ public class BotConfig {
 
     @Bean
     public TelegramBot telegramBot() {
-        return new TelegramBot(botToken);
+        return new TelegramBot.Builder(botToken)
+                .build();
     }
 }

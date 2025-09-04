@@ -2,9 +2,8 @@ package dev.heisen.quillgeistbot.bot;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
-import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.request.SendMessage;
+import dev.heisen.quillgeistbot.dispatcher.UpdateDispatcher;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +17,7 @@ import java.util.List;
 public class TelegramBotListener implements UpdatesListener {
 
     private final TelegramBot bot;
+    private final UpdateDispatcher dispatcher;
 
     @PostConstruct
     public void init() {
@@ -29,13 +29,10 @@ public class TelegramBotListener implements UpdatesListener {
         list.forEach(update -> {
             log.info("Processing update {}", update);
 
-            Message message = update.message();
-
-            if (message != null && message.text() != null) {
-                if (message.text().toLowerCase().contains("ping")) {
-                    SendMessage response = new SendMessage(update.message().chat().username(), "pong");
-                    bot.execute(response);
-                }
+            try {
+                dispatcher.dispatch(update);
+            } catch (Exception e) {
+                log.error("Error while dispatching update {}", update, e);
             }
         });
 
