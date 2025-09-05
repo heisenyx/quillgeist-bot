@@ -6,3 +6,7 @@ spring:
 
 bot:
   token: ${BOT_TOKEN}
+
+yt-dlp:
+  format: mp4
+  max-filesize: 52428800 # 50MiB

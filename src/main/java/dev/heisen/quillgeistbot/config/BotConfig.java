@@ -1,19 +1,23 @@
 package dev.heisen.quillgeistbot.config;
 
 import com.pengrad.telegrambot.TelegramBot;
-import org.springframework.beans.factory.annotation.Value;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.annotation.Validated;
 
-@Configuration
+@ConfigurationProperties(prefix = "bot")
+@Validated
+@RequiredArgsConstructor
 public class BotConfig {
 
-    @Value("${bot.token}")
-    private String botToken;
+    @NotEmpty
+    private final String token;
 
     @Bean
     public TelegramBot telegramBot() {
-        return new TelegramBot.Builder(botToken)
+        return new TelegramBot.Builder(token)
                 .build();
     }
 }
