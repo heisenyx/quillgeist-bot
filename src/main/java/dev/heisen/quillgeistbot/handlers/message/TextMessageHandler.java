@@ -5,8 +5,9 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.ReplyParameters;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendVideo;
-import dev.heisen.quillgeistbot.exception.VideoMaxFilesizeException;
-import dev.heisen.quillgeistbot.service.VideoService;
+import dev.heisen.quillgeistbot.exception.UnsupportedResourceException;
+import dev.heisen.quillgeistbot.exception.MaxFilesizeException;
+import dev.heisen.quillgeistbot.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,7 @@ import java.io.File;
 public class TextMessageHandler {
 
     private final TelegramBot bot;
-    private final VideoService videoService;
+    private final FileService fileService;
 
     public void handle(Update update) {
 
@@ -28,17 +29,19 @@ public class TextMessageHandler {
         if (text.contains("https")) {
             File file = null;
             try {
-                file = videoService.downloadVideo(update.message().text());
+                file = fileService.downloadFile(update.message().text());
 
                 SendVideo video = new SendVideo(chatId, file)
                         .replyParameters(new ReplyParameters(messageId));
                 bot.execute(video);
-            } catch (VideoMaxFilesizeException e) {
+            } catch (MaxFilesizeException e) {
                 sendCallbackMessage(chatId, messageId, "File size limit reached");
+            } catch (UnsupportedResourceException e) {
+                sendCallbackMessage(chatId, messageId, "Unsupported resource");
             } catch (Exception e) {
-                sendCallbackMessage(chatId, messageId, "Unexpected error occurred");
+                sendCallbackMessage(chatId, messageId, "Error");
             } finally {
-                if (file != null) videoService.cleanup(file);
+                if (file != null) fileService.cleanup(file);
             }
         }
     }

@@ -11,7 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class YtDlpProperties {
 
     @NotEmpty
-    private final String format;
+    private final String preset;
 
     @NotEmpty
     private final String maxFilesize;
