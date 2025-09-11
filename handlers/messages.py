@@ -3,7 +3,8 @@ from urllib.parse import urlparse
 
 from telegram import Update
 from telegram.ext import ContextTypes
-from services import tiktok
+
+from services import tiktok, ydl
 from services.exceptions import VideoUnavailable
 from utils.logger import setup_logger
 
@@ -11,6 +12,8 @@ logger = setup_logger()
 
 SERVICE_HANDLERS = {
     "tiktok": tiktok.process,
+    "instagram": ydl.process,
+    "youtu": ydl.process,
 }
 
 async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -37,6 +40,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not handler:
         logger.error(f"Unsupported URL: {video_url}")
+        await message.reply_text("Unsupported URL 😔")
         return
 
     try:
@@ -45,8 +49,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if media_group:
             await message.reply_media_group(media=media_group)
         else:
-            await message.reply_text("😔 Could not extract any media from the link")
-
+            await message.reply_text("Could not extract any media from the link 😔")
     except VideoUnavailable:
         await message.reply_text("❌ Video unavailable")
     except Exception as e:
