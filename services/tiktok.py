@@ -10,7 +10,7 @@ logger = setup_logger()
 BASE_API_URL = f"https://douyin.wtf/api/hybrid/video_data?url="
 
 async def process(url: str) -> None | list[InputMedia]:
-    logger.info(f"Processing tiktok url: {url}")
+    logger.info(f"Processing Tiktok url: {url}")
 
     if "deleted" in url or "private" in url:
         raise VideoUnavailable("Video unavailable")
