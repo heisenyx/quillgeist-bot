@@ -10,7 +10,7 @@ logger = setup_logger()
 BASE_API_URL = f"https://douyin.wtf/api/hybrid/video_data?url="
 
 async def process(url: str) -> None | list[InputMedia]:
-    logger.info(f"Processing url: {url}")
+    logger.info(f"Processing tiktok url: {url}")
 
     if "deleted" in url or "private" in url:
         raise VideoUnavailable("Video unavailable")
@@ -32,15 +32,17 @@ async def process(url: str) -> None | list[InputMedia]:
             return None
 
         content_type = data.get("content_type")
+        print(content_type)
         media_group = []
         match content_type:
-            case "video":
-                video_url = data.get("video").get("play_addr").get("url_list")[0]
-                media_group.append(InputMediaVideo(video_url))
             case "multi_photo":
                 for image in data.get("image_post_info").get("images")[:10]:
                     image_url = image.get("display_image").get("url_list")[0]
                     media_group.append(InputMediaPhoto(image_url))
+            case _:
+                video_url = data.get("video").get("play_addr").get("url_list")[0]
+                media_group.append(InputMediaVideo(video_url))
+        print(media_group)
         return media_group
     except httpx.RequestError as e:
         logger.error(f"An HTTP error occurred: {e}")
