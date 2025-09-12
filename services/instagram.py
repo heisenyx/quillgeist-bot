@@ -1,3 +1,5 @@
+import asyncio
+
 from instagrapi import Client
 from telegram import InputMedia, InputMediaPhoto, InputMediaVideo
 
@@ -13,8 +15,8 @@ async def process(url: str) -> None | list[InputMedia]:
     logger.info(f"Processing Instagram url: {url}")
 
     try:
-        media_id = cl.media_pk_from_url(url)
-        media_info = cl.media_info_v1(media_id)
+        media_id = await asyncio.to_thread(cl.media_pk_from_url, url)
+        media_info = await asyncio.to_thread(cl.media_info_v1, media_id)
         if not media_info:
             logger.warning(f"No media found for url: {url}")
             return None
