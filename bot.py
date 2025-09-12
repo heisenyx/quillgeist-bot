@@ -12,7 +12,7 @@ commands = {
 }
 
 def main():
-    bot = Application.builder().token(BOT_TOKEN).build()
+    bot = Application.builder().token(BOT_TOKEN).concurrent_updates(True).build()
 
     for command, handler in commands.items():
         bot.add_handler(CommandHandler(command, handler))
