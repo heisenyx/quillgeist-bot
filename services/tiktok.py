@@ -32,7 +32,6 @@ async def process(url: str) -> None | list[InputMedia]:
             return None
 
         content_type = data.get("content_type")
-        print(content_type)
         media_group = []
         match content_type:
             case "multi_photo":
@@ -42,8 +41,8 @@ async def process(url: str) -> None | list[InputMedia]:
             case _:
                 video_url = data.get("video").get("play_addr").get("url_list")[0]
                 media_group.append(InputMediaVideo(video_url))
-        print(media_group)
         return media_group
+
     except httpx.RequestError as e:
         logger.error(f"An HTTP error occurred: {e}")
         return None
