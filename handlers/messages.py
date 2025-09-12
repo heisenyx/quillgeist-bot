@@ -2,9 +2,10 @@ import re
 from urllib.parse import urlparse
 
 from telegram import Update
+from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
-from services import tiktok, ydl
+from services import tiktok, instagram
 from services.exceptions import VideoUnavailable
 from utils.logger import setup_logger
 
@@ -12,8 +13,7 @@ logger = setup_logger()
 
 SERVICE_HANDLERS = {
     "tiktok": tiktok.process,
-    "instagram": ydl.process,
-    "youtu": ydl.process,
+    "instagram": instagram.process,
 }
 
 async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -44,6 +44,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
+        await message.chat.send_chat_action(ChatAction.UPLOAD_DOCUMENT)
         media_group = await handler(video_url)
 
         if media_group:
