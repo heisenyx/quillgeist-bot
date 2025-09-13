@@ -21,8 +21,8 @@ async def process(url: str) -> None | list[InputMedia]:
             logger.info(f"Resolving share link: {url}")
             async with httpx.AsyncClient(follow_redirects=True) as client:
                 response = await client.get(url, timeout=5)
-        url = str(response.url)
-        logger.info(f"Resolved to standard URL: {url}")
+            url = str(response.url)
+            logger.info(f"Resolved to standard URL: {url}")
 
         media_id = await asyncio.to_thread(cl.media_pk_from_url, url)
         media_info = await asyncio.to_thread(cl.media_info_v1, media_id)
@@ -44,6 +44,7 @@ async def process(url: str) -> None | list[InputMedia]:
         return media_group
     except MediaNotFound:
         logger.warning(f"No media found for url: {url}")
+        return None
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
         return None
