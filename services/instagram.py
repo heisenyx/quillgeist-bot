@@ -1,4 +1,5 @@
 import asyncio
+import threading
 
 import httpx
 from instagrapi import Client
@@ -10,19 +11,21 @@ from utils.logger import setup_logger
 
 logger = setup_logger()
 
-_client: Client | None = None
+thread_local_data = threading.local()
+
 def get_client() -> Client:
-    global _client
-    if _client is None:
-        logger.info("Initializing and logging in Instagram client...")
-        _client = Client()
-        _client.login_by_sessionid(IG_SESSION_ID)
-    return _client
+    client = getattr(thread_local_data, 'client', None)
+    if client is None:
+        logger.info("Initializing Instagram client for a new thread")
+        client = Client()
+        client.login_by_sessionid(IG_SESSION_ID)
+        thread_local_data.client = client
+    return client
 
 async def process(url: str) -> None | list[InputMedia]:
     logger.info(f"Processing Instagram url: {url}")
 
-    cl = get_client()
+    cl = await asyncio.to_thread(get_client)
 
     try:
         if "/share/" in url:
