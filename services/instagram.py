@@ -1,31 +1,49 @@
 import asyncio
-import threading
+import os
 
 import httpx
 from instagrapi import Client
-from instagrapi.exceptions import MediaNotFound
+from instagrapi.exceptions import MediaNotFound, LoginRequired
 from telegram import InputMedia, InputMediaPhoto, InputMediaVideo
 
-from config import IG_SESSION_ID
+from config import IG_USERNAME, IG_PASSWORD
 from utils.logger import setup_logger
 
 logger = setup_logger()
 
-thread_local_data = threading.local()
+ig_client: Client | None = None
 
-def get_client() -> Client:
-    client = getattr(thread_local_data, 'client', None)
-    if client is None:
-        logger.info("Initializing Instagram client for a new thread")
-        client = Client()
-        client.login_by_sessionid(IG_SESSION_ID)
-        thread_local_data.client = client
-    return client
+def initialize_client() -> None:
+    global ig_client
+
+    cl = Client()
+    session_file = "session.json"
+
+    try:
+        if os.path.exists(session_file):
+            logger.info(f"Found session file. Attempting to load.")
+            session = cl.load_settings(session_file)
+            cl.set_settings(session)
+            cl.get_timeline_feed()
+    except (LoginRequired, Exception) as e:
+        logger.warning(f"Session is invalid: {e}. Need to login via username and password")
+        try:
+            cl.login(IG_USERNAME, IG_PASSWORD)
+            logger.info("Successfully logged in via username and password.")
+            cl.dump_settings(session_file)
+            logger.info(f"New session saved to {os.path.abspath(session_file)}.")
+        except Exception as e:
+            logger.critical(f"An unexpected error occurred during login: {e}")
+            raise e
+
+    ig_client = cl
 
 async def process(url: str) -> None | list[InputMedia]:
     logger.info(f"Processing Instagram url: {url}")
 
-    cl = await asyncio.to_thread(get_client)
+    if not ig_client:
+        logger.error("Instagram client is not initialized! Cannot process link.")
+        return None
 
     try:
         if "/share/" in url:
@@ -35,8 +53,8 @@ async def process(url: str) -> None | list[InputMedia]:
             url = str(response.url)
             logger.info(f"Resolved to standard URL: {url}")
 
-        media_id = await asyncio.to_thread(cl.media_pk_from_url, url)
-        media_info = await asyncio.to_thread(cl.media_info_v1, media_id)
+        media_id = await asyncio.to_thread(ig_client.media_pk_from_url, url)
+        media_info = await asyncio.to_thread(ig_client.media_info_v1, media_id)
 
         media_type = media_info.media_type
 
