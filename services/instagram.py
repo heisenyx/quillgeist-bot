@@ -25,11 +25,14 @@ def initialize_client() -> None:
             session = cl.load_settings(session_file)
             cl.set_settings(session)
             cl.get_timeline_feed()
+        else:
+            cl.login(IG_USERNAME, IG_PASSWORD)
+            cl.dump_settings(session_file)
+            logger.info(f"New session saved to {os.path.abspath(session_file)}.")
     except (LoginRequired, Exception) as e:
         logger.warning(f"Session is invalid: {e}. Need to login via username and password")
         try:
             cl.login(IG_USERNAME, IG_PASSWORD)
-            logger.info("Successfully logged in via username and password.")
             cl.dump_settings(session_file)
             logger.info(f"New session saved to {os.path.abspath(session_file)}.")
         except Exception as e:

@@ -14,11 +14,11 @@ commands = {
     "settings": settings,
 }
 
-async def main():
+def main():
 
     try:
         logger.info("Initializing Instagram client...")
-        await asyncio.to_thread(initialize_client)
+        initialize_client()
         logger.info("Instagram client initialized successfully")
     except Exception as e:
         logger.critical(f"Could not initialize Instagram client. Bot cannot start. Error: {e}")
@@ -31,18 +31,7 @@ async def main():
 
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, link))
 
-    async with bot:
-        await bot.start()
-        await bot.updater.start_polling()
-
-        # Keep the bot running until it's cancelled
-        await asyncio.Future()
-
-        await bot.updater.stop()
-        await bot.stop()
+    bot.run_polling()
 
 if __name__ == '__main__':
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        logger.info("Bot process terminated by user.")
+    main()
