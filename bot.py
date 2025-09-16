@@ -1,3 +1,5 @@
+import asyncio
+
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from config import BOT_TOKEN
 from handlers.commands import *
@@ -12,11 +14,11 @@ commands = {
     "settings": settings,
 }
 
-def main():
+async def main():
 
     try:
         logger.info("Initializing Instagram client...")
-        initialize_client()
+        await asyncio.to_thread(initialize_client)
         logger.info("Instagram client initialized successfully")
     except Exception as e:
         logger.critical(f"FATAL: Could not initialize Instagram client. Bot cannot start. Error: {e}")
@@ -29,7 +31,7 @@ def main():
 
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, link))
 
-    bot.run_polling()
+    await bot.run_polling()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
