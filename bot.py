@@ -17,6 +17,7 @@ def main():
     try:
         logger.info("Initializing Instagram client...")
         initialize_client()
+        logger.info("Instagram client initialized successfully")
     except Exception as e:
         logger.critical(f"FATAL: Could not initialize Instagram client. Bot cannot start. Error: {e}")
         return
