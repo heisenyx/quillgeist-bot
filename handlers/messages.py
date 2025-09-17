@@ -50,7 +50,7 @@ async def link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if media_group:
             await message.reply_media_group(media=media_group)
         else:
-            await message.reply_text("Could not extract any media from the link 😔")
+            await message.reply_text("Could not extract media from the link 😔")
     except VideoUnavailable:
         await message.reply_text("❌ Video unavailable")
     except Exception as e:

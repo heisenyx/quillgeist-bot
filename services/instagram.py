@@ -12,41 +12,46 @@ from utils.logger import setup_logger
 logger = setup_logger()
 
 ig_client: Client | None = None
+_client_lock = asyncio.Lock()
 
-def initialize_client() -> None:
+async def initialize_client() -> None:
     global ig_client
 
-    cl = Client()
-    session_file = "session.json"
+    async with _client_lock:
+        if ig_client and ig_client.get_timeline_feed(): return
 
-    try:
-        if os.path.exists(session_file):
-            logger.info(f"Found session file. Attempting to load.")
-            session = cl.load_settings(session_file)
-            cl.set_settings(session)
-            cl.get_timeline_feed()
-        else:
-            cl.login(IG_USERNAME, IG_PASSWORD)
-            cl.dump_settings(session_file)
-            logger.info(f"New session saved to {os.path.abspath(session_file)}.")
-    except (LoginRequired, Exception) as e:
-        logger.warning(f"Session is invalid: {e}. Need to login via username and password")
+        cl = Client()
+        session_file = "session.json"
+
         try:
-            cl.login(IG_USERNAME, IG_PASSWORD)
-            cl.dump_settings(session_file)
-            logger.info(f"New session saved to {os.path.abspath(session_file)}.")
-        except Exception as e:
-            logger.critical(f"An unexpected error occurred during login: {e}")
-            raise e
+            if os.path.exists(session_file):
+                logger.info("Found session file. Attempting to load")
+                cl.load_settings(session_file)
+                cl.get_timeline_feed()
+                logger.info("Session loaded and validated successfully")
+            else:
+                raise LoginRequired("Session file not found")
+        except (LoginRequired, Exception) as e:
+            logger.warning(f"Session is invalid: {e}. Logging in with credentials")
+            try:
+                old_session = cl.get_settings()
 
-    ig_client = cl
+                cl.set_settings({})
+                cl.set_uuids(old_session["uuids"])
+
+                cl.login(IG_USERNAME, IG_PASSWORD)
+                cl.get_timeline_feed()
+
+                cl.dump_settings(session_file)
+                logger.info(f"New session saved to {os.path.abspath(session_file)}")
+            except Exception as e:
+                ig_client = None
+                raise e
+
+        ig_client = cl
 
 async def process(url: str) -> None | list[InputMedia]:
     logger.info(f"Processing Instagram url: {url}")
-
-    if not ig_client:
-        logger.error("Instagram client is not initialized! Cannot process link.")
-        return None
 
     try:
         if "/share/" in url:
@@ -77,6 +82,9 @@ async def process(url: str) -> None | list[InputMedia]:
     except MediaNotFound:
         logger.warning(f"No media found for url: {url}")
         return None
+    except LoginRequired:
+        logger.warning(f"Instagram login required for url: {url}")
+        await initialize_client()
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
         return None
